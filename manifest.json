@@ -1,4 +1,5 @@
 {
+  "id": "CGC-9cCjRx7eWFB2bUXv6",
   "name": "Plugin for Rumble",
   "version": "1.0.0",
   "script": "dist/index.js",
