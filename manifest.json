@@ -1,0 +1,7 @@
+{
+  "name": "Plugin for Rumble",
+  "version": "1.0.0",
+  "script": "dist/index.js",
+  "player": "dist/player.html",
+  "description": "Plugin for playing videos from rumble.com"
+}
