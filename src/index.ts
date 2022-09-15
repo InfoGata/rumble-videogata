@@ -72,12 +72,12 @@ const getVideoById = async (apiId: string) => {
   const link = html.getElementsByClassName(
     "media-by--a"
   )[0] as HTMLAnchorElement;
-  // const channelApiId = link.getAttribute("href")?.split("/").slice(-1)[0];
+  const channelApiId = link.getAttribute("href")?.split("/").slice(-1)[0];
 
   const video: Video = {
     title: name || "",
     channelName: channelName,
-    // channelApiId,
+    channelApiId,
     duration,
     apiId: videoId,
     uploadDate,
@@ -92,6 +92,27 @@ const getVideoById = async (apiId: string) => {
     views,
   };
   return video;
+};
+
+const getChannelVideos = async (request: ChannelVideosRequest) => {
+  const url = `${rumbleUrl}/c/${request.apiId}`;
+  let proxy = await application.getCorsProxy();
+  if (!proxy) {
+    proxy = "https://cloudcors.audio-pwa.workers.dev?url=";
+  }
+
+  const result = await fetch(`${proxy}${url}`);
+  const text = await result.text();
+  const parser = new DOMParser();
+  const html = parser.parseFromString(text, "text/html");
+
+  const listings = Array.from(
+    html.getElementsByClassName("video-listing-entry")
+  );
+  const items: Video[] = listings.map(videoListingToVideo);
+  return {
+    items,
+  };
 };
 
 const getVideo = async (request: GetVideoRequest) => {
@@ -142,6 +163,40 @@ const videoListingToVideo = (listing: Element): Video => {
   };
 };
 
+const channelListingToChannel = (
+  listing: Element,
+  index: number,
+  styles: Record<string, CSSStyleDeclaration>
+): Channel => {
+  // title
+  const title =
+    listing.getElementsByClassName("channel-item--title")[0]?.textContent || "";
+
+  // apiId
+  const link = listing.getElementsByClassName(
+    "channel-item--a"
+  )[0] as HTMLAnchorElement;
+  const apiId = link.getAttribute("href")?.split("/").slice(-1)[0];
+
+  //images
+  const iElement = listing.getElementsByClassName(
+    "user-image--img"
+  )[0] as HTMLImageElement;
+
+  const selector = `i.user-image--img--id-${index}`;
+  const rule = styles[selector];
+  let backgroundImage: string | undefined;
+  if (rule) {
+    backgroundImage = rule.backgroundImage.slice(4, -1).replace(/"/g, "");
+  }
+
+  return {
+    name: title,
+    images: backgroundImage ? [{ url: backgroundImage }] : [],
+    apiId,
+  };
+};
+
 const searchVideos = async (
   request: SearchRequest
 ): Promise<SearchVideoResult> => {
@@ -165,15 +220,56 @@ const searchVideos = async (
   };
 };
 
+const searchChannels = async (request: SearchRequest) => {
+  const url = `${rumbleUrl}/search/channel`;
+  const urlWithQuery = `${url}?q=${request.query}`;
+  let proxy = await application.getCorsProxy();
+  if (!proxy) {
+    proxy = "https://cloudcors.audio-pwa.workers.dev?url=";
+  }
+  const result = await fetch(`${proxy}${urlWithQuery}`);
+  const text = await result.text();
+  const parser = new DOMParser();
+  const html = parser.parseFromString(text, "text/html");
+
+  // create index of styles
+  const listings = Array.from(
+    html.getElementsByClassName("video-listing-entry")
+  );
+
+  // create index of styles
+  const rules = html.styleSheets[0].cssRules;
+  const styles = Array.from(rules)
+    .filter((r) => r instanceof CSSStyleRule)
+    .reduce<Record<string, CSSStyleDeclaration>>((a, r) => {
+      const styleRule = r as CSSStyleRule;
+      a[styleRule.selectorText] = styleRule.style;
+      return a;
+    }, {});
+
+  const items: Channel[] = listings.map((l, i) =>
+    channelListingToChannel(l, i, styles)
+  );
+  return {
+    items,
+  };
+};
+
 const searchAll = async (request: SearchRequest): Promise<SearchAllResult> => {
   const videosPromise = searchVideos(request);
-  const [videos] = await Promise.all([videosPromise]);
-  return { videos };
+  const channelsPromise = searchChannels(request);
+  const [videos, channels] = await Promise.all([
+    videosPromise,
+    channelsPromise,
+  ]);
+  return { videos, channels };
 };
 
 application.onSearchAll = searchAll;
 application.onSearchVideos = searchVideos;
 application.onGetVideo = getVideo;
+application.onGetChannelVideos = getChannelVideos;
+application.onSearchChannels = searchChannels;
 
 const init = () => {};
 
