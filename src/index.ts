@@ -95,7 +95,10 @@ const getVideoById = async (apiId: string) => {
 };
 
 const getChannelVideos = async (request: ChannelVideosRequest) => {
-  const url = `${rumbleUrl}/c/${request.apiId}`;
+  const perPage = 20;
+  const offset = request.pageInfo?.offset || 0;
+  const page = offset / 20 + 1;
+  const url = `${rumbleUrl}/c/${request.apiId}?page=${page}`;
   let proxy = await application.getCorsProxy();
   if (!proxy) {
     proxy = "https://cloudcors.audio-pwa.workers.dev?url=";
@@ -110,8 +113,14 @@ const getChannelVideos = async (request: ChannelVideosRequest) => {
     html.getElementsByClassName("video-listing-entry")
   );
   const items: Video[] = listings.map(videoListingToVideo);
+  const pageInfo: PageInfo = {
+    resultsPerPage: perPage,
+    offset,
+    nextPage: page.toString(),
+  };
   return {
     items,
+    pageInfo,
   };
 };
 
@@ -155,10 +164,22 @@ const videoListingToVideo = (listing: Element): Video => {
   )[0] as HTMLAnchorElement;
   const apiId = link?.getAttribute("href")?.substring(1).split("0")[0];
 
+  // Channel name
+  const channelLink = listing.getElementsByClassName(
+    "video-item--by-a"
+  )[0] as HTMLAnchorElement;
+  const channelName = channelLink?.textContent || "";
+  const channelApiId = channelLink
+    .getAttribute("href")
+    ?.split("/")
+    .slice(-1)[0];
+
   return {
     title,
     duration,
     apiId,
+    channelName,
+    channelApiId,
     images: [{ url: imageSrc }],
   };
 };
@@ -200,8 +221,11 @@ const channelListingToChannel = (
 const searchVideos = async (
   request: SearchRequest
 ): Promise<SearchVideoResult> => {
+  const perPage = 20;
+  const offset = request.pageInfo?.offset || 0;
+  const page = offset / 20 + 1;
   const url = `${rumbleUrl}/search/videos`;
-  const urlWithQuery = `${url}?q=${request.query}`;
+  const urlWithQuery = `${url}?q=${request.query}&page=${page}`;
   let proxy = await application.getCorsProxy();
   if (!proxy) {
     proxy = "https://cloudcors.audio-pwa.workers.dev?url=";
@@ -215,8 +239,14 @@ const searchVideos = async (
     html.getElementsByClassName("video-listing-entry")
   );
   const items: Video[] = listings.map(videoListingToVideo);
+  const pageInfo: PageInfo = {
+    resultsPerPage: perPage,
+    offset,
+    nextPage: page.toString(),
+  };
   return {
     items,
+    pageInfo,
   };
 };
 
