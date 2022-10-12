@@ -1,7 +1,7 @@
 {
   "id": "CGC-9cCjRx7eWFB2bUXv6",
   "name": "Plugin for Rumble",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "script": "dist/index.js",
   "player": "dist/player.html",
   "description": "Plugin for playing videos from rumble.com"
