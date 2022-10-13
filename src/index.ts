@@ -1,5 +1,4 @@
 import { VideoObject, WithContext } from "schema-dts";
-import "videogata-plugin-typings";
 import { MessageType, UiMessageType } from "./types";
 import { parse, toSeconds } from "iso8601-duration";
 
