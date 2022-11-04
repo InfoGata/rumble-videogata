@@ -5,5 +5,6 @@
   "script": "dist/index.js",
   "player": "dist/player.html",
   "description": "Plugin for playing videos from rumble.com",
-  "updateUrl": "https://cdn.jsdelivr.net/gh/InfoGata/rumble-videogata@latest/manifest.json"
+  "updateUrl": "https://cdn.jsdelivr.net/gh/InfoGata/rumble-videogata@latest/manifest.json",
+  "homepage": "https://github.com/InfoGata/rumble-videogata"
 }
