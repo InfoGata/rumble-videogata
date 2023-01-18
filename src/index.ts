@@ -26,14 +26,21 @@ async function getVideoId(apiId: string): Promise<string> {
   return video.apiId || "";
 }
 
-const getVideoById = async (apiId: string) => {
-  const url = `${rumbleUrl}/${apiId}`;
+const requestUrl = async (url: string): Promise<Response> => {
   let proxy = await application.getCorsProxy();
   if (!proxy) {
     proxy = "https://cloudcors.audio-pwa.workers.dev?url=";
   }
 
-  const result = await fetch(`${proxy}${url}`);
+  const result = (await application.isNetworkRequestCorsDisabled())
+    ? await application.networkRequest(url)
+    : await fetch(`${proxy}${url}`);
+  return result;
+};
+
+const getVideoById = async (apiId: string) => {
+  const url = `${rumbleUrl}/${apiId}`;
+  const result = await requestUrl(url);
   const text = await result.text();
   const parser = new DOMParser();
   const html = parser.parseFromString(text, "text/html");
@@ -98,12 +105,8 @@ const getChannelVideos = async (request: ChannelVideosRequest) => {
   const offset = request.pageInfo?.offset || 0;
   const page = offset / 20 + 1;
   const url = `${rumbleUrl}/c/${request.apiId}?page=${page}`;
-  let proxy = await application.getCorsProxy();
-  if (!proxy) {
-    proxy = "https://cloudcors.audio-pwa.workers.dev?url=";
-  }
 
-  const result = await fetch(`${proxy}${url}`);
+  const result = await requestUrl(url);
   const text = await result.text();
   const parser = new DOMParser();
   const html = parser.parseFromString(text, "text/html");
@@ -186,7 +189,7 @@ const videoListingToVideo = (listing: Element): Video => {
 const channelListingToChannel = (
   listing: Element,
   index: number,
-  styles: Record<string, CSSStyleDeclaration>
+  styles?: Record<string, CSSStyleDeclaration>
 ): Channel => {
   // title
   const title =
@@ -204,10 +207,12 @@ const channelListingToChannel = (
   )[0] as HTMLImageElement;
 
   const selector = `i.user-image--img--id-${index}`;
-  const rule = styles[selector];
   let backgroundImage: string | undefined;
-  if (rule) {
-    backgroundImage = rule.backgroundImage.slice(4, -1).replace(/"/g, "");
+  if (styles) {
+    const rule = styles[selector];
+    if (rule) {
+      backgroundImage = rule.backgroundImage.slice(4, -1).replace(/"/g, "");
+    }
   }
 
   return {
@@ -225,11 +230,7 @@ const searchVideos = async (
   const page = offset / 20 + 1;
   const url = `${rumbleUrl}/search/videos`;
   const urlWithQuery = `${url}?q=${request.query}&page=${page}`;
-  let proxy = await application.getCorsProxy();
-  if (!proxy) {
-    proxy = "https://cloudcors.audio-pwa.workers.dev?url=";
-  }
-  const result = await fetch(`${proxy}${urlWithQuery}`);
+  const result = await requestUrl(urlWithQuery);
 
   const text = await result.text();
   const parser = new DOMParser();
@@ -252,11 +253,8 @@ const searchVideos = async (
 const searchChannels = async (request: SearchRequest) => {
   const url = `${rumbleUrl}/search/channel`;
   const urlWithQuery = `${url}?q=${request.query}`;
-  let proxy = await application.getCorsProxy();
-  if (!proxy) {
-    proxy = "https://cloudcors.audio-pwa.workers.dev?url=";
-  }
-  const result = await fetch(`${proxy}${urlWithQuery}`);
+
+  const result = await requestUrl(urlWithQuery);
   const text = await result.text();
   const parser = new DOMParser();
   const html = parser.parseFromString(text, "text/html");
@@ -267,14 +265,17 @@ const searchChannels = async (request: SearchRequest) => {
   );
 
   // create index of styles
-  const rules = html.styleSheets[0].cssRules;
-  const styles = Array.from(rules)
-    .filter((r) => r instanceof CSSStyleRule)
-    .reduce<Record<string, CSSStyleDeclaration>>((a, r) => {
-      const styleRule = r as CSSStyleRule;
-      a[styleRule.selectorText] = styleRule.style;
-      return a;
-    }, {});
+  const rules = html.styleSheets[0]?.cssRules;
+
+  const styles =
+    rules &&
+    Array.from(rules)
+      .filter((r) => r instanceof CSSStyleRule)
+      .reduce<Record<string, CSSStyleDeclaration>>((a, r) => {
+        const styleRule = r as CSSStyleRule;
+        a[styleRule.selectorText] = styleRule.style;
+        return a;
+      }, {});
 
   const items: Channel[] = listings.map((l, i) =>
     channelListingToChannel(l, i, styles)
