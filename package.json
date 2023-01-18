@@ -7,11 +7,11 @@
   "dependencies": {
     "@emotion/react": "^11.7.1",
     "@emotion/styled": "^11.6.0",
+    "@infogata/videogata-plugin-typings": "1.5.0",
     "@mui/material": "^5.4.2",
     "axios": "^0.21.1",
     "iso8601-duration": "^2.1.1",
-    "preact": "^10.8.2",
-    "@infogata/videogata-plugin-typings": "1.5.0"
+    "preact": "^10.8.2"
   },
   "scripts": {
     "build": "parcel build src/index.ts src/player.html --dist-dir dist/ --no-source-maps",

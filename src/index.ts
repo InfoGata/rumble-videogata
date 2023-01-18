@@ -202,10 +202,6 @@ const channelListingToChannel = (
   const apiId = link.getAttribute("href")?.split("/").slice(-1)[0];
 
   //images
-  const iElement = listing.getElementsByClassName(
-    "user-image--img"
-  )[0] as HTMLImageElement;
-
   const selector = `i.user-image--img--id-${index}`;
   let backgroundImage: string | undefined;
   if (styles) {
@@ -256,8 +252,18 @@ const searchChannels = async (request: SearchRequest) => {
 
   const result = await requestUrl(urlWithQuery);
   const text = await result.text();
+
   const parser = new DOMParser();
-  const html = parser.parseFromString(text, "text/html");
+  let html = parser.parseFromString(text, "text/html");
+  let rules = html.styleSheets[0]?.cssRules;
+
+  if (!rules) {
+    // In chrome can't get styleSheets, so append html instead.
+    const el = document.createRange().createContextualFragment(text);
+    document.body.appendChild(el);
+    html = document;
+    rules = html.styleSheets[0].cssRules;
+  }
 
   // create index of styles
   const listings = Array.from(
@@ -265,8 +271,6 @@ const searchChannels = async (request: SearchRequest) => {
   );
 
   // create index of styles
-  const rules = html.styleSheets[0]?.cssRules;
-
   const styles =
     rules &&
     Array.from(rules)
@@ -280,6 +284,8 @@ const searchChannels = async (request: SearchRequest) => {
   const items: Channel[] = listings.map((l, i) =>
     channelListingToChannel(l, i, styles)
   );
+
+  document.body.innerHTML = "";
   return {
     items,
   };
