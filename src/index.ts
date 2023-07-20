@@ -262,7 +262,7 @@ const searchChannels = async (request: SearchRequest) => {
     const el = document.createRange().createContextualFragment(text);
     document.body.appendChild(el);
     html = document;
-    rules = html.styleSheets[0].cssRules;
+    rules = html.styleSheets[0]?.cssRules;
   }
 
   // create index of styles
