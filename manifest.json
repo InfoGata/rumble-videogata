@@ -6,5 +6,9 @@
   "player": "dist/player.html",
   "description": "Plugin for playing videos from rumble.com",
   "updateUrl": "https://cdn.jsdelivr.net/gh/InfoGata/rumble-videogata@latest/manifest.json",
-  "homepage": "https://github.com/InfoGata/rumble-videogata"
+  "homepage": "https://github.com/InfoGata/rumble-videogata",
+  "authentication": {
+    "loginUrl": "https://rumble.com/login.php",
+    "cookiesToFind": ["u_s"]
+  }
 }
