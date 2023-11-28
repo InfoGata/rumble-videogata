@@ -246,6 +246,34 @@ const searchVideos = async (
   };
 };
 
+const getUserChannels = async (): Promise<SearchChannelResult> => {
+  const path = "/account/channel/subscriptions";
+  const url = `${rumbleUrl}${path}`;
+
+  const result = await requestUrl(url);
+  const text = await result.text();
+
+  const parser = new DOMParser();
+  const html = parser.parseFromString(text, "text/html");
+  const tables = html.getElementsByTagName("table");
+  const elements = Array.from(tables[0].getElementsByTagName("a"));
+  const channelElements = elements.filter(
+    (e) =>
+      e.href.startsWith("/c/") || new URL(e.href).pathname.startsWith("/c/")
+  );
+
+  const channels = channelElements.map(
+    (ce): Channel => ({
+      name: ce.textContent ?? "",
+      apiId: ce.href.split("/").slice(-1)[0],
+    })
+  );
+
+  return {
+    items: channels,
+  };
+};
+
 const searchChannels = async (request: SearchRequest) => {
   const url = `${rumbleUrl}/search/channel`;
   const urlWithQuery = `${url}?q=${request.query}`;
@@ -307,6 +335,12 @@ application.onGetVideo = getVideo;
 application.onGetChannelVideos = getChannelVideos;
 application.onSearchChannels = searchChannels;
 
-const init = () => {};
+const init = async () => {
+  const loggedIn = await application.isLoggedIn();
+  if (loggedIn) {
+    application.onGetUserChannels = getUserChannels;
+  }
+};
 
+application.onPostLogin = init;
 init();
