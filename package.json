@@ -13,18 +13,21 @@
     "preact": "^10.8.2"
   },
   "scripts": {
-    "build": "parcel build src/index.ts src/player.html --dist-dir dist/ --no-source-maps",
-    "start": "parcel src/index.ts src/player.html --dist-dir dist/ --no-source-maps"
+    "build": "npm run build:plugin && npm run build:player",
+    "build:plugin": "vite build --config plugin.vite.config.ts",
+    "build:player": "vite build --config player.vite.config.ts"
   },
   "alias": {
     "react": "preact/compat",
     "react-dom": "preact/compat"
   },
   "devDependencies": {
-    "parcel": "^2.5.0",
+    "@vitejs/plugin-legacy": "^7.2.1",
     "process": "^0.11.10",
     "schema-dts": "^1.1.0",
-    "typescript": "^4.2.3"
+    "typescript": "^4.2.3",
+    "vite": "^7.1.1",
+    "vite-plugin-singlefile": "^2.3.0"
   },
   "browserslist": [
     "last 1 Chrome version"
