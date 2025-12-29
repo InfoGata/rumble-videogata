@@ -13,7 +13,7 @@
     "preact": "^10.8.2"
   },
   "scripts": {
-    "build": "npm run build:plugin && npm run build:player",
+    "build": "tsc && npm run build:plugin && npm run build:player",
     "build:plugin": "vite build --config plugin.vite.config.ts",
     "build:player": "vite build --config player.vite.config.ts"
   },
@@ -25,7 +25,7 @@
     "@vitejs/plugin-legacy": "^7.2.1",
     "process": "^0.11.10",
     "schema-dts": "^1.1.0",
-    "typescript": "^4.2.3",
+    "typescript": "^5.0.0",
     "vite": "^7.1.1",
     "vite-plugin-singlefile": "^2.3.0"
   },
