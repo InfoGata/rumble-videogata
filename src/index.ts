@@ -164,7 +164,7 @@ const videoListingToVideo = (listing: Element): Video => {
   const link = listing.getElementsByClassName(
     "video-item--a"
   )[0] as HTMLAnchorElement;
-  const apiId = link?.getAttribute("href")?.substring(1).split("0")[0];
+  const apiId = link?.getAttribute("href")?.substring(1).split("?")[0];
 
   // Channel name
   const channelLink = listing.getElementsByClassName(
