@@ -15,10 +15,7 @@
       "es2017",
       "dom"
     ],
-    "typeRoots": [
-      "./node_modules/@types",
-      "./node_modules/@infogata"
-    ]
+    "types": ["@infogata/videogata-plugin-typings"]
   },
   "include": [
     "src/**/*"
